@@ -12,7 +12,7 @@ def fgsm(model, data, epsilon, device):
 
         output = model(x)
         _, y = output.topk(1)
-        loss = F.nll_loss(output, torch.tensor([y]).to(device))
+        loss = F.cross_entropy(output, torch.tensor([y]).to(device))
         model.zero_grad()
         loss.backward()
         perturbed_x = x + epsilon * x.grad.data.sign()
