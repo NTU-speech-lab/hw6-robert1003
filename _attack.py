@@ -19,8 +19,8 @@ def fgsm(model, dataLoader, epsilon, device):
         if y != py:
             wrong += 1
             
-            ori_x.append(x.squeeze(0).detach().cpu().numpy())
-            adv_x.append(x.squeeze(0).detach().cpu().numpy())
+            ori_x.append(x.squeeze(0).detach().cpu())
+            adv_x.append(x.squeeze(0).detach().cpu())
             
             continue
         
@@ -36,8 +36,8 @@ def fgsm(model, dataLoader, epsilon, device):
         else:
             fail += 1
         
-        ori_x.append(x.squeeze(0).detach().cpu().numpy())
-        adv_x.append(perturbed_x.squeeze(0).detach().cpu().numpy())
+        ori_x.append(x.squeeze(0).detach().cpu())
+        adv_x.append(perturbed_x.squeeze(0).detach().cpu())
 
     print('wrong: {}, succ: {}, fail: {} -> final acc: {}, succ attack rate: {}'.format(wrong, succ, fail, fail / (wrong + succ + fail), (wrong + succ) / (wrong + succ + fail)))
         

@@ -16,6 +16,7 @@ import torchvision.models as models
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 from PIL import Image
+from tqdm import tqdm
 from _dataset import Adverdataset
 from _utils import read_label
 from _attack import fgsm
@@ -30,10 +31,10 @@ torch.backends.cudnn.deterministic = True
 # hyperparams
 args = {
     'device': 'cuda',
-    'epsilon': 0.3,
+    'epsilon': 0.1,
     'input': sys.argv[1],
     'output': sys.argv[2],
-    'model': 'densenet169',
+    'model': 'densenet121',
     'valid': True,
     'mean': [0.485, 0.456, 0.406],
     'std': [0.229, 0.224, 0.225]
@@ -42,9 +43,14 @@ args = argparse.Namespace(**args)
 
 # create dataset and dataloader
 transform = transforms.Compose([
-    transforms.Resize((224, 224), interpolation=3),
     transforms.ToTensor(),
-    transforms.Normalize(args.mean, args.std, inplace=False)
+    transforms.Normalize(mean=args.mean, std=args.std, inplace=False)
+])
+inv_transform = transforms.Compose([
+    transforms.Normalize(mean=[0, 0, 0], std=[1 / i for i in args.std]),
+    transforms.Normalize(mean=[-i for i in args.mean], std=[1, 1, 1]),
+    transforms.Lambda(lambda x: torch.clamp(x, 0.0, 1.0)),
+    transforms.ToPILImage()
 ])
 df, label_name = read_label(
     os.path.join(args.input, 'labels.csv'),
@@ -52,6 +58,7 @@ df, label_name = read_label(
 )
 dataset = Adverdataset(os.path.join(args.input, 'images'), label=df, transform=transform)
 dataLoader = DataLoader(dataset, batch_size=1, shuffle=False)
+
 
 # load pretrained model
 if args.model == 'vgg16':
@@ -70,18 +77,13 @@ else:
     assert False
 
 # attack!
-ori_images, adv_images = fgsm(model, dataLoader, args.epsilon, args.device)
-mean = np.array(args.mean).reshape(3, 1, 1)
-std = np.array(args.std).reshape(3, 1, 1)
+ori_images, adv_images = fgsm(model, dataLoader, args.epsilon, args.device)    
 for i, x in enumerate(adv_images):
-    x = x * std + mean
-    x = torch.from_numpy(x).permute(1, 2, 0).numpy()
-    adv_images[i] = np.clip(x, 0, 1)
+    adv_images[i] = inv_transform(x)
 for i, x in enumerate(ori_images):
-    x = x * std + mean
-    x = torch.from_numpy(x).permute(1, 2, 0).numpy()
-    ori_images[i] = np.clip(x, 0, 1)
+    ori_images[i] = inv_transform(x)
 
 # output pictures
-for image, fname in zip(adv_images, sorted(os.listdir(os.path.join(args.input, 'images')))):
-    plt.imsave(os.path.join(args.output, fname), image)
+imgIter = tqdm(zip(adv_images, sorted(os.listdir(os.path.join(args.input, 'images')))), desc='[*] Saving')
+for image, fname in imgIter:
+    image.save(os.path.join(args.output, fname))
