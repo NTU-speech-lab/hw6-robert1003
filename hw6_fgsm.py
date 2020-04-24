@@ -38,7 +38,11 @@ transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize(args.mean, args.std, inplace=False)
 ])
-dataset = Adverdataset(args.input, label=None, transform=transform)
+df = pd.read_csv(os.path.join(args.input, 'labels.csv'))
+df = df.loc[:, 'TrueLabel'].to_numpy()
+label_name = pd.read_csv(os.path.join(args.input, 'categories.csv'))
+label_name = label_name.loc[:, 'CategoryName'].to_numpy()
+dataset = Adverdataset(os.path.join(args.input, 'images'), label=df, transform=transform)
 dataLoader = DataLoader(dataset, batch_size=1, shuffle=False)
 
 # load pretrained model
@@ -71,23 +75,5 @@ for i, x in enumerate(ori_images):
     ori_images[i] = np.clip(x, 0, 1)
 
 # output pictures
-for image, fname in zip(adv_images, sorted(os.listdir(args.input))):
+for image, fname in zip(adv_images, sorted(os.listdir(os.path.join(args.input, 'images')))):
     plt.imsave(os.path.join(args.output, fname), image)
-
-# valid
-if args.valid:
-    label, category = read_label('./data/labels.csv', './data/categories.csv')
-    dif = 0
-    tot = 0
-    for adv_image, y in zip(adv_images, label):
-        _, py = model(transform(Image.fromarray(np.uint8(adv_image * 255))).unsqueeze(0).to(args.device)).topk(1)
-        tot += 1
-        if py[0][0] != y:
-            dif += 1
-
-    print('succ rate:', dif / tot)
-
-    L_inf = 0
-    for ori_image, adv_image in zip(ori_images, adv_images):
-        L_inf += np.abs(ori_image - adv_image).max() * 255
-    print('L_inf:', L_inf / tot)

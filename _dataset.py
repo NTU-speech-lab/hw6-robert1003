@@ -13,16 +13,17 @@ class Adverdataset(Dataset):
         else:
             self.label = torch.from_numpy(label).long()
         self.transform = transform
-        self.fnames = sorted(os.listdir(root))
+        self.images = []
+        for fname in sorted(os.listdir(root)):
+            self.images.append(self.transform(Image.open(os.path.join(self.root, fname))))
 
     def __getitem__(self, idx):
-        img = Image.open(os.path.join(self.root, self.fnames[idx]))
-        img = self.transform(img)
+        img = self.images[idx]
         if self.label is None:
             return img
-        else:
+        else:       
             label = self.label[idx]
             return img, label
 
     def __len__(self):
-        return len(self.fnames)
+        return len(self.images)
