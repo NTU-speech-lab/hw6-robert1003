@@ -9,6 +9,7 @@ import argparse
 import pandas as pd
 import numpy as np
 import torch
+import random
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 import torchvision.models as models
@@ -18,6 +19,13 @@ from PIL import Image
 from _dataset import Adverdataset
 from _utils import read_label
 from _attack import fgsm
+
+# set random seed
+random.seed(0)
+np.random.seed(0)
+torch.manual_seed(0)
+torch.cuda.manual_seed_all(0)
+torch.backends.cudnn.deterministic = True
 
 # hyperparams
 args = {
@@ -38,10 +46,10 @@ transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize(args.mean, args.std, inplace=False)
 ])
-df = pd.read_csv(os.path.join(args.input, 'labels.csv'))
-df = df.loc[:, 'TrueLabel'].to_numpy()
-label_name = pd.read_csv(os.path.join(args.input, 'categories.csv'))
-label_name = label_name.loc[:, 'CategoryName'].to_numpy()
+df, label_name = read_label(
+    os.path.join(args.input, 'labels.csv'),
+    os.path.join(args.input, 'categories.csv')
+)
 dataset = Adverdataset(os.path.join(args.input, 'images'), label=df, transform=transform)
 dataLoader = DataLoader(dataset, batch_size=1, shuffle=False)
 

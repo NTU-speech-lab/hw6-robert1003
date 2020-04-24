@@ -8,7 +8,7 @@ def fgsm(model, dataLoader, epsilon, device):
     ori_x, adv_x = [], []
 
     wrong, succ, fail = 0, 0, 0
-    dataIter = tqdm(dataLoader, desc='Iteration')
+    dataIter = tqdm(dataLoader, desc='[*] Attack')
     for (x, y) in dataIter:
         x, y = x.to(device), y.to(device)
         x.requires_grad = True
