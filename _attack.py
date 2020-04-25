@@ -16,6 +16,7 @@ def fgsm(model, dataLoader, epsilon, device):
         output = model(x)
         _, py = output.topk(1)
         
+        '''
         if y != py:
             wrong += 1
             
@@ -23,7 +24,8 @@ def fgsm(model, dataLoader, epsilon, device):
             adv_x.append(x.squeeze(0).detach().cpu())
             
             continue
-        
+        '''
+
         loss = F.cross_entropy(output, torch.tensor([y]).to(device))
         loss.backward()
         perturbed_x = x + epsilon * x.grad.data.sign()

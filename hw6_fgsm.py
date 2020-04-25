@@ -31,7 +31,7 @@ torch.backends.cudnn.deterministic = True
 # hyperparams
 args = {
     'device': 'cuda',
-    'epsilon': 0.1,
+    'epsilon': 0.055, # 0.1: 0.975
     'input': sys.argv[1],
     'output': sys.argv[2],
     'model': 'densenet121',
