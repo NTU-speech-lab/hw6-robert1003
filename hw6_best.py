@@ -26,8 +26,8 @@ args = {
     'device': 'cuda',
     'epsilon': 1.00001 / 255.0 / 0.229,
     'max_iter': 50,
-    'overshoot': 0.05,
-    'num_classes': 10,
+    'overshoot': 0.01,
+    'num_classes': 5,
     'input': sys.argv[1],
     'output': sys.argv[2],
     'start': int(sys.argv[3]),
@@ -40,7 +40,7 @@ args = {
 args = argparse.Namespace(**args)
 
 # set random seed
-random.seed(0)                                                                                                                                                     
+random.seed(0)
 np.random.seed(0)
 torch.manual_seed(0)
 torch.cuda.manual_seed_all(0)

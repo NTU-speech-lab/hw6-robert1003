@@ -96,7 +96,8 @@ def deepfool(model, dataLoader, transform, inv_transform, start, end, eps, max_i
                 if test(model, x.cpu()[0], y, transform, inv_transform, device):
                     break
                 else:
-                    r2 = r / np.max(r) * eps
+                    pass
+                    r2 = r / np.max(r) * eps * 0.2
                     x = x.detach() + torch.from_numpy(r2).to(device)
                     x = torch.min(torch.max(x, lower), upper)
                     x.requires_grad = True
@@ -120,7 +121,7 @@ def deepfool(model, dataLoader, transform, inv_transform, start, end, eps, max_i
                     pert = pert_k
                     w = w_k
 
-            r = (pert + 1e-4) * np.sign(w)#w / np.linalg.norm(w)
+            r = (pert + 1e-4) * (np.sign(w) * 0.8)#w / np.linalg.norm(w)
             x = x.detach() + (1 + overshoot) * torch.from_numpy(r).to(device)
             x = torch.min(torch.max(x, lower), upper)
 
