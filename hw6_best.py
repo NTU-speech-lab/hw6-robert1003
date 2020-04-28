@@ -25,9 +25,9 @@ from _attack import deepfool
 args = {
     'device': 'cuda',
     'epsilon': 1.00001 / 255.0 / 0.229,
-    'max_iter': 50,
-    'overshoot': 0.01,
-    'num_classes': 5,
+    'max_iter': 100,
+    'overshoot': 0.001,
+    'num_classes': 3,
     'input': sys.argv[1],
     'output': sys.argv[2],
     'start': int(sys.argv[3]),
@@ -87,4 +87,7 @@ ori_images, adv_images = deepfool(model, dataLoader, transform, inv_transform, a
 
 imgIter = tqdm(zip(adv_images, sorted(os.listdir(os.path.join(args.input, 'images')))[args.start:args.end+1]), desc='[*] Saving')
 for image, fname in imgIter:
-    image.save(os.path.join(args.output, fname))
+    if image is None:
+        Image.open(os.path.join(args.input, 'images', fname)).save(os.path.join(args.output, fname))
+    else:
+        image.save(os.path.join(args.output, fname))

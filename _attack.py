@@ -77,13 +77,17 @@ def deepfool(model, dataLoader, transform, inv_transform, start, end, eps, max_i
         labels = model(img).detach().cpu().numpy().flatten().argsort()[::-1][0:num_classes]
         ori_label = labels[0]
 
-        if test(model, img.cpu()[0], y, transform, inv_transform, device):
+        if ori_label != y:
             wrong += 1
+            ori_x.append(None)
+            adv_x.append(None)
+            '''
             ori_x.append(inv_transform(img.cpu().squeeze(0)))
             adv_x.append(inv_transform(img.cpu().squeeze(0)))
             if y == get_pred(model, adv_x[-1], transform, device):
                 print('w', idx)
             linf += np.linalg.norm((np.array(ori_x[-1]).astype('int64') - np.array(adv_x[-1]).astype('int64')).flatten(), np.inf)
+            '''
             continue
 
         x = img.detach()
@@ -96,8 +100,12 @@ def deepfool(model, dataLoader, transform, inv_transform, start, end, eps, max_i
                 if test(model, x.cpu()[0], y, transform, inv_transform, device):
                     break
                 else:
-                    pass
                     r2 = r / np.max(r) * eps * 0.2
+                    '''
+                    eps -= 1e-7
+                    upper = img.detach() + eps
+                    lower = img.detach() - eps
+                    '''
                     x = x.detach() + torch.from_numpy(r2).to(device)
                     x = torch.min(torch.max(x, lower), upper)
                     x.requires_grad = True
@@ -121,7 +129,7 @@ def deepfool(model, dataLoader, transform, inv_transform, start, end, eps, max_i
                     pert = pert_k
                     w = w_k
 
-            r = (pert + 1e-4) * (np.sign(w) * 0.8)#w / np.linalg.norm(w)
+            r = (pert + 1e-4) * (np.sign(w) * 0.5)#w / np.linalg.norm(w)
             x = x.detach() + (1 + overshoot) * torch.from_numpy(r).to(device)
             x = torch.min(torch.max(x, lower), upper)
 
