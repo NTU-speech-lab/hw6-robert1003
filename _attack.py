@@ -163,7 +163,8 @@ def deepfool(model, dataLoader, in_dir, in_names, transform, inv_transform, star
         else:
             succ += 1
 
-        linf += np.linalg.norm((np.array(ori_x[-1]).astype('int64') - np.array(adv_x[-1]).astype('int64')).flatten(), np.inf)
+        if adv_x[-1] is not None:
+            linf += np.linalg.norm((np.array(ori_x[-1]).astype('int64') - np.array(adv_x[-1]).astype('int64')).flatten(), np.inf)
 
     print('wrong: {}, succ: {}, fail: {} -> final acc: {}, succ attack rate: {}'.format(wrong, succ, fail, fail / (wrong + succ + fail), (wrong + succ) / (wrong +     succ + fail)))
     print('linf: {}'.format(linf / (wrong + succ + fail)))
