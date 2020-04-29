@@ -83,7 +83,7 @@ else:
     assert False
 
 # attack!
-ori_images, adv_images = deepfool(model, dataLoader, transform, inv_transform, args.start, args.end, args.epsilon, args.max_iter, args.overshoot, args.num_classes, args.device)
+ori_images, adv_images = deepfool(model, dataLoader, args.input, sorted(os.listdir(os.path.join(args.input, 'images'))), transform, inv_transform, args.start, args.end, args.epsilon, args.max_iter, args.overshoot, args.num_classes, args.device)
 
 imgIter = tqdm(zip(adv_images, sorted(os.listdir(os.path.join(args.input, 'images')))[args.start:args.end+1]), desc='[*] Saving')
 for image, fname in imgIter:

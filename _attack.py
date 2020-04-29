@@ -1,8 +1,10 @@
 import torch
 import torch.nn.functional as F
 import numpy as np
+import os
 from tqdm import tqdm
 from torch.autograd.gradcheck import zero_gradients
+from PIL import Image
 
 def fgsm(model, dataLoader, epsilon, device):
     model = model.to(device)
@@ -58,7 +60,7 @@ def get_pred(model, img, transform, device):
     _, py = model(transform(img).unsqueeze(0).to(device)).topk(1)
     return py
 
-def deepfool(model, dataLoader, transform, inv_transform, start, end, eps, max_iter, overshoot, num_classes, device):
+def deepfool(model, dataLoader, in_dir, in_names, transform, inv_transform, start, end, eps, max_iter, overshoot, num_classes, device):
     model = model.to(device)
     model.eval()
     ori_x, adv_x = [], []
@@ -129,19 +131,35 @@ def deepfool(model, dataLoader, transform, inv_transform, start, end, eps, max_i
                     pert = pert_k
                     w = w_k
 
-            r = (pert + 1e-4) * (np.sign(w) * 0.5)#w / np.linalg.norm(w)
+            r = (pert + 1e-4) * np.sign(w)#w / np.linalg.norm(w)
             x = x.detach() + (1 + overshoot) * torch.from_numpy(r).to(device)
             x = torch.min(torch.max(x, lower), upper)
 
             x.requires_grad = True
             x_preds = model(x)
             k_i = np.argmax(x_preds.detach().cpu().numpy().flatten())
+        
+        p1 = np.array(Image.open(os.path.join(in_dir, 'images', in_names[idx]))).astype('int64')#np.array(inv_transform(img.cpu().squeeze(0))).astype('int64')
+        p2 = np.array(inv_transform(x.cpu()[0])).astype('int64')
+        p3 = p1 + np.clip(p2 - p1, -1, 1)
+        p1 = Image.fromarray(p1.astype('uint8'))
+        p2 = Image.fromarray(p2.astype('uint8'))
+        p3 = Image.fromarray(p3.astype('uint8'))
 
-        ori_x.append(inv_transform(img.cpu().squeeze(0)))
-        adv_x.append(inv_transform(x.cpu()[0]))
+        ori_x.append(p1)
+        adv_x.append(p3)
+
         if y == get_pred(model, adv_x[-1], transform, device):
             print(idx)
-            fail += 1
+            adv_x.pop()
+            adv_x.append(p2)
+            if y == get_pred(model, adv_x[-1], transform, device):
+                print(idx)
+                adv_x.pop()
+                adv_x.append(None)
+                fail += 1
+            else:
+                succ += 1
         else:
             succ += 1
 
